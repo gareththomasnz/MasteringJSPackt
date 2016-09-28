@@ -1,13 +1,13 @@
-(function(win) {
+(function(scope, isForgiving) {
 	var version = 1.0003;
-	var doc = window.document;
+	var doc = scope.document;
 	var q;
 	
 	console.log("My version is " + version);
 	
 
 	var gQ = function(selector, context) {
-		return q(selector);
+		return q.query(selector, context);
 	};
 	
 	
@@ -50,26 +50,47 @@
 	};
 	
 	gQ.ready(function(){
-		if(doc.querySelectorAll && doc.querySelectorAll('body:first-of-type')){
-                q = function(parm){
-                        return doc.querySelectorAll(parm);
-                };
-                
-                gQ.start();
-        
+		if('jQuery' in scope){
+			q = new JQueryAdapter(scope.jQuery);
+			gQ.start();
+		}else if(doc.querySelectorAll && doc.querySelectorAll('body:first-of-type')){
+                q = new NativeQuery();
+		gQ.start();
         }else{
-            loadScript('js/sizzle.js', function(){
-                q = Sizzle;
+            gQ.loadJS('js/sizzle.js', function(){
+                q = new SizzleAdapter(Sizzle);
                 gQ.start();
                 });    
         }
-});	
+});
+	
+	NativeQuery = function(){};
+	NativeQuery.prototype.query = function(selector, context){
+		context = context || doc;
+		return context.querySelectorAll(selector);
+	};
+	
+	SizzleAdapter = function(lib){this.lib=lib;};
+	SizzleAdapter.prototype.query = function(selector, context){
+		context = context || doc;
+		return this.lib(selector, context);
+	};
+	
+	JQueryAdapter = function(lib){this.lib=lib;};
+	JQueryAdapter.prototype.query = function(selector, context){
+		context = context || doc;
+		return this.lib(selector, context).get();
+	};
 	
         
-        if(!window.gQ){
-                window.gQ = gQ;
+        if(!scope.gQ){
+                scope.gQ = gQ;
         }else{
-                
+                if(isForgiving && scope.gQ.version){
+                        scope.gQ = scope.gQ.version()>version ? scope.gQ : gQ;
+                }else{
+                      throw new Error("You can not load the library twice");  
+                }       
         }
 
-}(window));
+}(window, true));
