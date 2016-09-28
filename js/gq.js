@@ -28,7 +28,7 @@
         doc.getElementsByTagName('head')[0].appendChild(js);
 	};
 	
-	gQ.ready = addOnReady(function() {
+	gQ.ready = function(fun) {
 	var last = window.onload;
 	var isReady = false;
 	if (doc.addEventListener) {
