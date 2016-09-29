@@ -65,7 +65,7 @@
 	
 	gQ.ready(function(){
 		if('jQuery' in scope){
-			q = QueryFacade.create(JQueryAdapter(scope.jQuery,doc));
+			q = QueryFacade.create(JQueryAdapter,scope.jQuery,doc);
 			gQ.start();
 		}else if(doc.querySelectorAll && doc.querySelectorAll('body:first-of-type')){
                 q = QueryFacade.create(NativeQuery,null,doc);
@@ -118,7 +118,7 @@
 		};
 	SizzleAdapter.prototype.query = function(selector, context){
 		context = context || doc;
-		return gQ.toArray(this.lib(selector, context));
+		return new SizzleAdapter(this.lib, gQ.toArray(this.lib(selector,context)));
 	};
 	SizzleAdapter.prototype.text = NativeQuery.prototype.text;
 	

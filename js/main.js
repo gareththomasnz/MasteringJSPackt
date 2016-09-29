@@ -8,20 +8,18 @@ console.log(gQ.version() + " ___  ____");
 gQ.start = function(){
 	gQ('h1').text('Why, Hello There!');
 	
-	console.log(gQ('h1').adapter);
 	
 	var ticker = gQ.ticker();
 	
 	ticker.add(100,4,function(){
-		console.log("I'm called 4 times at 100ms");
+		console.log("i'm called 4 times at 100 ms");
 	});
-	
 	ticker.add(500,2,function(){
-		console.log("I'm called 2 times at 500ms");
+		console.log("i'm called 2 times at 500 ms");
 	});
-	
+
 	ticker.add(1000,-1,function(){
-		console.log("I'm called forever times at 1000ms");
+		console.log("i'm called forever times at 1000 ms");
 	});
 	
 };
