@@ -4,10 +4,9 @@
 
 
 console.log(gQ.version() + " ___  ____");
-var q;
 
 gQ.start = function(){
-	console.log(gQ('h1'));
+	gQ('h1').text('Why, Hello There!');
 };
 
 //window.onload = function() {

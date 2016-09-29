@@ -42,7 +42,19 @@
 		if (last) last();
 		if (isReady) fun();
 	};
-}
+};
+
+	gQ.toArray = function(item){
+		var len = item.length;
+		var out = [];
+		if(len>0){
+			for(var i=0; i<len; i++)
+			out[i] = item[i];
+		}else{
+			out[0] = item;
+		}
+		return out;
+	};
 	
 	gQ.start = function(){};
 	gQ.version = function() {
@@ -50,11 +62,11 @@
 	};
 	
 	gQ.ready(function(){
-		if('jQuery' in scope){
-			q = new JQueryAdapter(scope.jQuery);
+		if(false && 'jQuery' in scope){
+			q = new JQueryAdapter(scope.jQuery,doc);
 			gQ.start();
 		}else if(doc.querySelectorAll && doc.querySelectorAll('body:first-of-type')){
-                q = new NativeQuery();
+                q = new NativeQuery(doc);
 		gQ.start();
         }else{
             gQ.loadJS('js/sizzle.js', function(){
@@ -64,22 +76,42 @@
         }
 });
 	
-	NativeQuery = function(){};
+	NativeQuery = function(context){this.context = context;};
 	NativeQuery.prototype.query = function(selector, context){
-		context = context || doc;
-		return context.querySelectorAll(selector);
+		context = context || this.context;
+		return new NativeQuery(gQ.toArray(context.querySelectorAll(selector)));
 	};
+	
+	NativeQuery.prototype.text = function(value){
+		innerText = (this.context[0].innerText===undefined) ? 'textContent' : 'innerText';
+		
+		for(var item in this.context){
+			this.context[item][innerText] = value;			
+		}
+
+		return value;
+	};
+	
+
 	
 	SizzleAdapter = function(lib){this.lib=lib;};
 	SizzleAdapter.prototype.query = function(selector, context){
 		context = context || doc;
-		return this.lib(selector, context);
+		return gQ.toArray(this.lib(selector, context));
 	};
 	
-	JQueryAdapter = function(lib){this.lib=lib;};
+	JQueryAdapter = function(lib, context){
+		this.lib=lib;
+		this.context = context;
+		this.target = lib(context);
+		};
 	JQueryAdapter.prototype.query = function(selector, context){
 		context = context || doc;
-		return this.lib(selector, context).get();
+		return new JQueryAdapter(this.lib, this.lib(selector, context).get());
+	};
+	
+	JQueryAdapter.prototype.text = function(value){
+		return this.target.text(value);
 	};
 	
         
