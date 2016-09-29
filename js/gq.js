@@ -1,15 +1,13 @@
 (function(scope, isForgiving) {
-	var version = 1.0003;
+	var version = 1.0007;
 	var doc = scope.document;
 	var q;
 	
 	console.log("My version is " + version);
 	
-
 	var gQ = function(selector, context) {
 		return q.query(selector, context);
 	};
-	
 	
 	gQ.loadJS = function(path, callback){
         var js = doc.createElement('script');
@@ -61,12 +59,16 @@
 		return version;
 	};
 	
+	gQ.ticker = function(){
+		return Ticker.getInstance();
+	};
+	
 	gQ.ready(function(){
-		if(false && 'jQuery' in scope){
+		if('jQuery' in scope){
 			q = QueryFacade.create(JQueryAdapter(scope.jQuery,doc));
 			gQ.start();
 		}else if(doc.querySelectorAll && doc.querySelectorAll('body:first-of-type')){
-                q = QueryFacade.create(NativeQuery,null,(doc));
+                q = QueryFacade.create(NativeQuery,null,doc);
 		gQ.start();
         }else{
             gQ.loadJS('js/sizzle.js', function(){
@@ -81,7 +83,7 @@
 			return adapter.context;
 		},
 		query = function(selector, context){
-		return new QueryFacade(adapter.query(selector, context));
+		return QueryFacade(adapter.query(selector, context));
 		},
 		text = function(value){
 		return adapter.text(value);
@@ -92,20 +94,7 @@
 	QueryFacade.create = function(adapter, lib, context){
 		return QueryFacade(new adapter(lib, context));
 	};
-	
-	//QueryFacade.prototype.dom = function(){
-	//	return this.adapter.context;
-	//};
-	//
-	//QueryFacade.prototype.query = function(selector, context){
-	//	return new QueryFacade(this.adapter.query(selector, context));
-	//};
-	//
-	//QueryFacade.prototype.text = function(value){
-	//	return this.adapter.text(value);
-	//};
-	
-	
+		
 	NativeQuery = function(lib, context){this.context = context;};
 	NativeQuery.prototype.query = function(selector, context){
 		context = context || this.context;
@@ -122,7 +111,6 @@
 		return value;
 	};
 	
-
 	
 	SizzleAdapter = function(lib, context){
 		this.lib=lib;
@@ -148,6 +136,63 @@
 		return this.target.text(value);
 	};
 	
+	var Ticker = (function(){
+		var instance;
+		function create(){
+			var intervalID;
+			var currentInterval = 0;
+			var maxInterval = 0;
+			var index = 0;
+			var sensitivity = 100;
+			var methods = {};
+			//public methods
+			function add(interval, times, callback, name){
+				var realInterval = interval - interval%sensitivity;
+				maxInterval = Math.max(realInterval,maxInterval);
+				name = name || (++index);
+				if(!methods[realInterval]) methods[realInterval] = {};				
+				methods[realInterval][name] = {times:times,callback:callback,interval:interval};
+				start();
+			}
+			//private methods
+			
+			function start(){
+				if(intervalID)
+				intervalID = setInterval(runInterval, sensitivity);
+			}
+			
+			function runInterval(){
+				currentInterval = currentInterval%maxInterval;
+				currentInterval += sensitivity;
+				
+				for(var interval in methods)
+				if(currentInterval%interval===0)
+				processIntervalGroup(methods[interval]);
+			}
+			
+			function processIntervalGroup(group){
+				var item;
+				for(var name in group){
+				item = group[name];
+				item.callback();
+				if(item.times===0){
+					delete group[name];
+				}else{
+				--item.times;	
+				}
+				
+				}
+			}
+			
+			return {add:add};
+		}
+		return {getInstance:function(){
+			if(!instance) instance = create();
+			return instance;
+			}};
+		})();
+	
+
         
         if(!scope.gQ){
                 scope.gQ = gQ;
