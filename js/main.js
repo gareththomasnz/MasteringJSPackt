@@ -7,6 +7,8 @@ console.log(gQ.version() + " ___  ____");
 
 gQ.start = function(){
 	gQ('h1').text('Why, Hello There!');
+	
+	console.log(gQ('h1').adapter);
 };
 
 //window.onload = function() {

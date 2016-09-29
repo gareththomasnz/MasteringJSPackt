@@ -63,20 +63,50 @@
 	
 	gQ.ready(function(){
 		if(false && 'jQuery' in scope){
-			q = new JQueryAdapter(scope.jQuery,doc);
+			q = QueryFacade.create(JQueryAdapter(scope.jQuery,doc));
 			gQ.start();
 		}else if(doc.querySelectorAll && doc.querySelectorAll('body:first-of-type')){
-                q = new NativeQuery(doc);
+                q = QueryFacade.create(NativeQuery,null,(doc));
 		gQ.start();
         }else{
             gQ.loadJS('js/sizzle.js', function(){
-                q = new SizzleAdapter(Sizzle);
+                q = QueryFacade.create(SizzleAdapter, Sizzle, doc);
                 gQ.start();
                 });    
         }
 });
 	
-	NativeQuery = function(context){this.context = context;};
+	QueryFacade = function(adapter){
+		var dom = function(){
+			return adapter.context;
+		},
+		query = function(selector, context){
+		return new QueryFacade(adapter.query(selector, context));
+		},
+		text = function(value){
+		return adapter.text(value);
+		};
+		return{dom:dom, query:query, text:text};
+	};
+	
+	QueryFacade.create = function(adapter, lib, context){
+		return QueryFacade(new adapter(lib, context));
+	};
+	
+	//QueryFacade.prototype.dom = function(){
+	//	return this.adapter.context;
+	//};
+	//
+	//QueryFacade.prototype.query = function(selector, context){
+	//	return new QueryFacade(this.adapter.query(selector, context));
+	//};
+	//
+	//QueryFacade.prototype.text = function(value){
+	//	return this.adapter.text(value);
+	//};
+	
+	
+	NativeQuery = function(lib, context){this.context = context;};
 	NativeQuery.prototype.query = function(selector, context){
 		context = context || this.context;
 		return new NativeQuery(gQ.toArray(context.querySelectorAll(selector)));
@@ -94,11 +124,15 @@
 	
 
 	
-	SizzleAdapter = function(lib){this.lib=lib;};
+	SizzleAdapter = function(lib, context){
+		this.lib=lib;
+		this.context = context;
+		};
 	SizzleAdapter.prototype.query = function(selector, context){
 		context = context || doc;
 		return gQ.toArray(this.lib(selector, context));
 	};
+	SizzleAdapter.prototype.text = NativeQuery.prototype.text;
 	
 	JQueryAdapter = function(lib, context){
 		this.lib=lib;
