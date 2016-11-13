@@ -1,0 +1,6 @@
+*.pptx
+*.zip
+camtasia
+slides
+ng2-play/node_modules
+ng2-play/dist
